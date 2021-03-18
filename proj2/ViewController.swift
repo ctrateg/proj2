@@ -7,25 +7,31 @@ class ViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        performSelector(inBackground: #selector(fetchJSON), with: nil)
+    }
+    
+   @objc func fetchJSON() {
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .search, target: self, action: #selector(alert))
         
         let urlString: String = urlName()
-        
+       
         if let url = URL(string: urlString) {
             if let data = try? Data(contentsOf: url) {
                 parse(json: data)
                 return
             }
         }
-        
-        showError()
+            
+        performSelector(onMainThread: #selector(showError), with: nil, waitUntilDone: false)
     }
     
-    func showError() {
-        let ac = UIAlertController(title: "Loading error", message: "There a was problem loading the feed: pls check u'r connection and try again", preferredStyle: .alert)
+    @objc func showError() {
         
+        let ac = UIAlertController(title: "Loading error", message: "There a was problem loading the feed: pls check u'r connection and try again", preferredStyle: .alert)
+            
         ac.addAction(UIAlertAction(title: "Ok", style: .default))
         present(ac, animated: true)
+        
     }
     
     @objc func alert(){
@@ -42,7 +48,10 @@ class ViewController: UITableViewController {
         
         if let jsonPetitions = try? decoder.decode(Petitions.self, from: json){
             petitions = jsonPetitions.results
-            tableView.reloadData()
+            
+            tableView.performSelector(onMainThread: #selector(UITableView.reloadData), with: nil, waitUntilDone: false)
+        } else {
+            performSelector(onMainThread: #selector(showError), with: nil, waitUntilDone: false)
         }
     }
 
